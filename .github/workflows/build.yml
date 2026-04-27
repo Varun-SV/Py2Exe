@@ -1,0 +1,66 @@
+name: Build Binaries
+
+# Triggered by the Streamlit app via the GitHub API (workflow_dispatch).
+# Builds the uploaded project on both Linux and Windows, uploads artifacts,
+# then deletes the temporary branch regardless of outcome.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Temporary branch containing the uploaded project"
+        required: true
+      main_file:
+        description: "Main Python file to compile (e.g. main.py)"
+        required: true
+        default: "main.py"
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build binary
+        run: >
+          python -m PyInstaller
+          --onefile
+          uploaded_project/${{ github.event.inputs.main_file }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.os }}
+          path: dist/
+          retention-days: 1
+
+  cleanup:
+    name: Delete temporary branch
+    needs: build
+    runs-on: ubuntu-latest
+    # Always run cleanup, even if the build jobs failed
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Delete temp branch
+        run: git push origin --delete "${{ github.event.inputs.branch }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
