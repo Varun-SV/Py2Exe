@@ -1,0 +1,13 @@
+[flake8]
+max-line-length = 100
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .venv,
+    venv,
+    *.egg-info
+extend-ignore =
+    # line too long — handled by black
+    E501

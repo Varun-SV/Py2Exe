@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "claude/**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint-and-test:
+    name: Lint & Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dev dependencies
+        run: pip install -e ".[dev]"
+
+      - name: black (format check)
+        run: black --check .
+
+      - name: isort (import order)
+        run: isort --check .
+
+      - name: flake8 (lint)
+        run: flake8 .
+
+      - name: mypy (type check)
+        run: mypy Python_to_exe_maker/
+
+      - name: pytest (unit tests)
+        run: pytest tests/ --cov=Python_to_exe_maker --cov-report=term-missing
