@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -12,7 +12,6 @@ from Python_to_exe_maker.builder import (
     ensure_pyinstaller,
     get_output_extension,
 )
-
 
 # ---------------------------------------------------------------------------
 # get_output_extension
@@ -53,9 +52,7 @@ def test_ensure_pyinstaller_installs_when_missing(
 
 @patch("Python_to_exe_maker.builder.subprocess.run")
 @patch("Python_to_exe_maker.builder.importlib.util.find_spec", return_value=MagicMock())
-def test_ensure_pyinstaller_skips_when_present(
-    mock_find: MagicMock, mock_run: MagicMock
-) -> None:
+def test_ensure_pyinstaller_skips_when_present(mock_find: MagicMock, mock_run: MagicMock) -> None:
     ensure_pyinstaller()
     mock_run.assert_not_called()
 
@@ -66,9 +63,7 @@ def test_ensure_pyinstaller_skips_when_present(
 
 
 @patch("Python_to_exe_maker.builder.subprocess.run")
-def test_check_needs_refactoring_returns_issues(
-    mock_run: MagicMock, tmp_project: Path
-) -> None:
+def test_check_needs_refactoring_returns_issues(mock_run: MagicMock, tmp_project: Path) -> None:
     mock_run.return_value = MagicMock(stdout="hello.py:1:1: E302 expected 2 blank lines\n")
     issues = check_needs_refactoring(tmp_project)
     assert len(issues) == 1

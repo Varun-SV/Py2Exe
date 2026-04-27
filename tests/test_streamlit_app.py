@@ -1,15 +1,19 @@
 """Smoke tests for streamlit_app — verifies it parses without import errors."""
 
-import importlib
 import sys
 from unittest.mock import MagicMock, patch
 
 
 def test_streamlit_app_imports_without_error() -> None:
-    """streamlit_app.py must be importable (all top-level imports resolve)."""
-    # Stub out heavy / network-bound modules before importing
+    """streamlit_app.py must be importable without triggering the build flow."""
     streamlit_mock = MagicMock()
     requests_mock = MagicMock()
+
+    # file_uploader returns None → `uploaded and build_clicked` is False, so
+    # the build body never executes during the import-level top-level Streamlit run.
+    streamlit_mock.file_uploader.return_value = None
+    streamlit_mock.button.return_value = False
+    streamlit_mock.stop.side_effect = SystemExit  # mirrors real st.stop() behaviour
 
     with (
         patch.dict(
@@ -25,4 +29,4 @@ def test_streamlit_app_imports_without_error() -> None:
             del sys.modules["streamlit_app"]
         import streamlit_app  # noqa: F401 — import side-effect is the test
 
-    assert True  # reached here without ImportError
+    assert True  # reached here without ImportError or unexpected exception

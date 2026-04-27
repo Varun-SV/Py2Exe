@@ -132,9 +132,7 @@ def poll_run(run_id: int, timeout: int = 600) -> str:
 
 def get_artifact_urls(run_id: int) -> dict[str, str]:
     """Return a dict with keys 'linux' and 'windows' mapping to artifact download URLs."""
-    resp = requests.get(
-        f"{API_BASE}/actions/runs/{run_id}/artifacts", headers=HEADERS, timeout=15
-    )
+    resp = requests.get(f"{API_BASE}/actions/runs/{run_id}/artifacts", headers=HEADERS, timeout=15)
     resp.raise_for_status()
     artifacts = resp.json().get("artifacts", [])
     urls: dict[str, str] = {}
@@ -150,9 +148,7 @@ def get_artifact_urls(run_id: int) -> dict[str, str]:
 
 def delete_branch(branch: str) -> None:
     """Delete *branch* from the remote; silently ignore 404."""
-    resp = requests.delete(
-        f"{API_BASE}/git/refs/heads/{branch}", headers=HEADERS, timeout=15
-    )
+    resp = requests.delete(f"{API_BASE}/git/refs/heads/{branch}", headers=HEADERS, timeout=15)
     if resp.status_code not in (204, 404):
         resp.raise_for_status()
 
@@ -207,16 +203,16 @@ if uploaded and build_clicked:
             st.code("\n".join(issues), language="text")
             ignore = st.button("Ignore issues and build anyway")
             if not ignore:
-                st.info("Fix the issues above, re-upload, and try again — or click 'Ignore' to build now.")
+                st.info(
+                    "Fix the issues above, re-upload, and try again — or click 'Ignore' to build now."
+                )
                 st.stop()
         else:
             st.success("No refactoring issues found.")
 
         # --- Collect files to upload ---
         files_to_push: dict[str, bytes] = {
-            str(f.relative_to(tmp_path)): f.read_bytes()
-            for f in tmp_path.rglob("*")
-            if f.is_file()
+            str(f.relative_to(tmp_path)): f.read_bytes() for f in tmp_path.rglob("*") if f.is_file()
         }
 
         branch = f"build-{int(time.time())}"
@@ -275,7 +271,4 @@ if uploaded and build_clicked:
             else:
                 st.warning("Windows .exe not available.")
 
-        st.caption(
-            "Artifact download requires a GitHub login. "
-            "Links expire after **1 day**."
-        )
+        st.caption("Artifact download requires a GitHub login. " "Links expire after **1 day**.")
