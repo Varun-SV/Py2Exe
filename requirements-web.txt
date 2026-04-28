@@ -1,0 +1,5 @@
+# Dependencies for the Streamlit web app (streamlit_app.py).
+# Used by Streamlit Community Cloud on deployment.
+# Install locally: pip install -r requirements-web.txt
+streamlit>=1.30
+requests>=2.31
