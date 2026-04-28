@@ -50,7 +50,16 @@ dev = [
 ]
 # pip install py2exe-maker[all]   — everything
 all = [
-    "py2exe-maker[web,build,dev]",
+    "streamlit>=1.30",
+    "requests>=2.31",
+    "pyinstaller>=6.0",
+    "black>=24.0",
+    "isort>=5.13",
+    "flake8>=7.0",
+    "mypy>=1.9",
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "types-requests>=2.31",
 ]
 
 [tool.black]

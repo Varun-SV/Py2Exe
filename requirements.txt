@@ -1,0 +1,5 @@
+# Streamlit Community Cloud reads this file to install Python dependencies.
+# Keeping it at the root ensures pip is used (not Poetry) and avoids
+# pyproject.toml self-referential extra issues.
+streamlit>=1.30
+requests>=2.31
