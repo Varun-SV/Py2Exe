@@ -68,6 +68,9 @@ GITHUB_TOKEN = "ghp_..."   # Personal Access Token: repo + actions scopes
 GITHUB_REPO  = "your-username/py2exe"
 ```
 
+> Streamlit Cloud uses `requirements.txt` in the repo root to install Python
+> dependencies (streamlit + requests). No extra configuration needed.
+
 4. Click **Deploy** — your app is live instantly
 
 > **Note**: GitHub artifact downloads require the user to be logged in to GitHub. Artifacts expire after 1 day.
