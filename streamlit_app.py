@@ -315,28 +315,15 @@ if uploaded and build_clicked:
             st.error(f"Main file **{main_file}** was not found inside the ZIP.")
             st.stop()
 
-        # --- Live progress placeholders ---
-        steps = {
-            "quality": st.empty(),
-            "upload": st.empty(),
-            "trigger": st.empty(),
-            "build": st.empty(),
-            "fetch": st.empty(),
-        }
-
-        def step(key: str, icon: str, msg: str) -> None:
-            steps[key].markdown(f"{icon} {msg}")
-
-        step("quality", "⏳", "Checking code quality…")
-
         # --- Code quality check ---
-        issues = check_needs_refactoring(tmp_path)
+        with st.spinner("Checking code quality…"):
+            issues = check_needs_refactoring(tmp_path)
         if issues:
-            step("quality", "⚠️", f"**{len(issues)} flake8 issue(s) found** — proceeding anyway")
+            st.warning(f"**{len(issues)} flake8 issue(s) found** — proceeding anyway")
             with st.expander("View issues"):
                 st.code("\n".join(issues), language="text")
         else:
-            step("quality", "✅", "Code quality check passed")
+            st.success("Code quality check passed")
 
         # --- Collect files ---
         files_to_push: dict[str, bytes] = {
@@ -360,52 +347,39 @@ if uploaded and build_clicked:
         branch = f"build-{int(time.time())}"
 
         try:
-            step("upload", "⏳", f"Uploading {len(files_to_push)} file(s) to GitHub…")
-            create_branch(branch)
-            push_files_to_branch(branch, files_to_push)
-            step("upload", "✅", f"{len(files_to_push)} file(s) uploaded")
+            with st.spinner(f"Uploading {len(files_to_push)} file(s) to GitHub…"):
+                create_branch(branch)
+                push_files_to_branch(branch, files_to_push)
 
-            step("trigger", "⏳", "Triggering GitHub Actions build…")
-            dispatch_time = time.time()
-            trigger_workflow(
-                branch,
-                main_file,
-                exe_name,
-                python_version,
-                bundle_type,
-                windowed,
-                icon_filename,
-                asset_files_input,
-            )
-            run_id = _find_run_id(branch, dispatch_time)
-            step(
-                "trigger",
-                "✅",
-                f"Build started — [run #{run_id}](https://github.com/{GITHUB_REPO}/actions/runs/{run_id})",
-            )
+            with st.spinner("Triggering GitHub Actions build…"):
+                dispatch_time = time.time()
+                trigger_workflow(
+                    branch,
+                    main_file,
+                    exe_name,
+                    python_version,
+                    bundle_type,
+                    windowed,
+                    icon_filename,
+                    asset_files_input,
+                )
+                run_id = _find_run_id(branch, dispatch_time)
 
-            step("build", "⏳", "Building on ubuntu-latest + windows-latest (est. ~2 min)…")
-            conclusion = poll_run(run_id, timeout=600)
+            with st.spinner("Building on ubuntu-latest + windows-latest (est. ~2 min)…"):
+                conclusion = poll_run(run_id, timeout=600)
 
             if conclusion != "success":
-                step(
-                    "build",
-                    "❌",
-                    f"Build finished with status **{conclusion}** — [view logs](https://github.com/{GITHUB_REPO}/actions/runs/{run_id})",
-                )
+                st.error("Build failed. Please check your code and try again.")
                 delete_branch(branch)
                 st.stop()
 
-            step("build", "✅", "Build succeeded")
-
-            step("fetch", "⏳", "Fetching built binaries…")
-            artifact_urls = get_artifact_urls(run_id)
-            artifacts: dict[str, bytes] = {}
-            if "linux" in artifact_urls:
-                artifacts["linux"] = fetch_artifact_bytes(artifact_urls["linux"])
-            if "windows" in artifact_urls:
-                artifacts["windows"] = fetch_artifact_bytes(artifact_urls["windows"])
-            step("fetch", "✅", "Binaries ready — download below")
+            with st.spinner("Fetching built binaries…"):
+                artifact_urls = get_artifact_urls(run_id)
+                artifacts: dict[str, bytes] = {}
+                if "linux" in artifact_urls:
+                    artifacts["linux"] = fetch_artifact_bytes(artifact_urls["linux"])
+                if "windows" in artifact_urls:
+                    artifacts["windows"] = fetch_artifact_bytes(artifact_urls["windows"])
 
         except Exception as exc:  # noqa: BLE001
             delete_branch(branch)
