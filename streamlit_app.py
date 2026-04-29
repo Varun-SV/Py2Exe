@@ -340,9 +340,7 @@ if uploaded and build_clicked:
 
         # --- Collect files ---
         files_to_push: dict[str, bytes] = {
-            str(f.relative_to(tmp_path)): f.read_bytes()
-            for f in tmp_path.rglob("*")
-            if f.is_file()
+            str(f.relative_to(tmp_path)): f.read_bytes() for f in tmp_path.rglob("*") if f.is_file()
         }
 
         # Icon
@@ -354,7 +352,7 @@ if uploaded and build_clicked:
 
         # Extra assets
         asset_names: list[str] = []
-        for asset in (extra_assets or []):
+        for asset in extra_assets or []:
             files_to_push[f"_assets/{asset.name}"] = asset.getvalue()
             asset_names.append(asset.name)
         asset_files_input = ",".join(asset_names)
@@ -370,17 +368,31 @@ if uploaded and build_clicked:
             step("trigger", "⏳", "Triggering GitHub Actions build…")
             dispatch_time = time.time()
             trigger_workflow(
-                branch, main_file, exe_name, python_version,
-                bundle_type, windowed, icon_filename, asset_files_input,
+                branch,
+                main_file,
+                exe_name,
+                python_version,
+                bundle_type,
+                windowed,
+                icon_filename,
+                asset_files_input,
             )
             run_id = _find_run_id(branch, dispatch_time)
-            step("trigger", "✅", f"Build started — [run #{run_id}](https://github.com/{GITHUB_REPO}/actions/runs/{run_id})")
+            step(
+                "trigger",
+                "✅",
+                f"Build started — [run #{run_id}](https://github.com/{GITHUB_REPO}/actions/runs/{run_id})",
+            )
 
             step("build", "⏳", "Building on ubuntu-latest + windows-latest (est. ~2 min)…")
             conclusion = poll_run(run_id, timeout=600)
 
             if conclusion != "success":
-                step("build", "❌", f"Build finished with status **{conclusion}** — [view logs](https://github.com/{GITHUB_REPO}/actions/runs/{run_id})")
+                step(
+                    "build",
+                    "❌",
+                    f"Build finished with status **{conclusion}** — [view logs](https://github.com/{GITHUB_REPO}/actions/runs/{run_id})",
+                )
                 delete_branch(branch)
                 st.stop()
 
