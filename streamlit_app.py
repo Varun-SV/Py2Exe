@@ -149,7 +149,7 @@ def get_artifact_urls(run_id: int) -> dict[str, str]:
 def delete_branch(branch: str) -> None:
     """Delete *branch* from the remote; silently ignore 404."""
     resp = requests.delete(f"{API_BASE}/git/refs/heads/{branch}", headers=HEADERS, timeout=15)
-    if resp.status_code not in (204, 404):
+    if resp.status_code not in (204, 404, 422):
         resp.raise_for_status()
 
 
