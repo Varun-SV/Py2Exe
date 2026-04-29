@@ -265,31 +265,37 @@ if uploaded and build_clicked:
 
         artifact_urls = get_artifact_urls(run_id)
 
-        st.success("Build complete! Download your binaries below.")
-        col1, col2 = st.columns(2)
-        with col1:
+        artifacts: dict[str, bytes] = {}
+        with st.spinner("Fetching built binaries..."):
             if "linux" in artifact_urls:
-                with st.spinner("Fetching Linux binary..."):
-                    linux_bytes = fetch_artifact_bytes(artifact_urls["linux"])
-                st.download_button(
-                    "Download Linux binary",
-                    data=linux_bytes,
-                    file_name="linux-binary.zip",
-                    mime="application/zip",
-                )
-            else:
-                st.warning("Linux binary not available.")
-        with col2:
+                artifacts["linux"] = fetch_artifact_bytes(artifact_urls["linux"])
             if "windows" in artifact_urls:
-                with st.spinner("Fetching Windows .exe..."):
-                    windows_bytes = fetch_artifact_bytes(artifact_urls["windows"])
-                st.download_button(
-                    "Download Windows .exe",
-                    data=windows_bytes,
-                    file_name="windows-exe.zip",
-                    mime="application/zip",
-                )
-            else:
-                st.warning("Windows .exe not available.")
+                artifacts["windows"] = fetch_artifact_bytes(artifact_urls["windows"])
 
-        st.caption("Archives contain the built binary. Links expire after **1 day**.")
+        st.session_state["artifacts"] = artifacts
+
+if "artifacts" in st.session_state:
+    artifacts = st.session_state["artifacts"]
+    st.success("Build complete! Download your binaries below.")
+    col1, col2 = st.columns(2)
+    with col1:
+        if "linux" in artifacts:
+            st.download_button(
+                "Download Linux binary",
+                data=artifacts["linux"],
+                file_name="linux-binary.zip",
+                mime="application/zip",
+            )
+        else:
+            st.warning("Linux binary not available.")
+    with col2:
+        if "windows" in artifacts:
+            st.download_button(
+                "Download Windows .exe",
+                data=artifacts["windows"],
+                file_name="windows-exe.zip",
+                mime="application/zip",
+            )
+        else:
+            st.warning("Windows .exe not available.")
+    st.caption("Archives contain the built binary. Links expire after **1 day**.")
