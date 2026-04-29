@@ -57,8 +57,13 @@ jobs:
     runs-on: ubuntu-latest
     # Always run cleanup, even if the build jobs failed
     if: always()
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Delete temp branch
         run: git push origin --delete "${{ github.event.inputs.branch }}"
