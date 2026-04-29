@@ -146,6 +146,13 @@ def get_artifact_urls(run_id: int) -> dict[str, str]:
     return urls
 
 
+def fetch_artifact_bytes(url: str) -> bytes:
+    """Download artifact ZIP content server-side using the GitHub token."""
+    resp = requests.get(url, headers=HEADERS, timeout=120, allow_redirects=True)
+    resp.raise_for_status()
+    return resp.content
+
+
 def delete_branch(branch: str) -> None:
     """Delete *branch* from the remote; silently ignore 404."""
     resp = requests.delete(f"{API_BASE}/git/refs/heads/{branch}", headers=HEADERS, timeout=15)
@@ -262,13 +269,27 @@ if uploaded and build_clicked:
         col1, col2 = st.columns(2)
         with col1:
             if "linux" in artifact_urls:
-                st.link_button("Download Linux binary", artifact_urls["linux"])
+                with st.spinner("Fetching Linux binary..."):
+                    linux_bytes = fetch_artifact_bytes(artifact_urls["linux"])
+                st.download_button(
+                    "Download Linux binary",
+                    data=linux_bytes,
+                    file_name="linux-binary.zip",
+                    mime="application/zip",
+                )
             else:
                 st.warning("Linux binary not available.")
         with col2:
             if "windows" in artifact_urls:
-                st.link_button("Download Windows .exe", artifact_urls["windows"])
+                with st.spinner("Fetching Windows .exe..."):
+                    windows_bytes = fetch_artifact_bytes(artifact_urls["windows"])
+                st.download_button(
+                    "Download Windows .exe",
+                    data=windows_bytes,
+                    file_name="windows-exe.zip",
+                    mime="application/zip",
+                )
             else:
                 st.warning("Windows .exe not available.")
 
-        st.caption("Artifact download requires a GitHub login. " "Links expire after **1 day**.")
+        st.caption("Archives contain the built binary. Links expire after **1 day**.")
