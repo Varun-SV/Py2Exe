@@ -14,6 +14,30 @@ on:
         description: "Main Python file to compile (e.g. main.py)"
         required: true
         default: "main.py"
+      exe_name:
+        description: "Output binary name (no extension)"
+        required: false
+        default: "output"
+      python_version:
+        description: "Python version (3.9 / 3.10 / 3.11 / 3.12)"
+        required: false
+        default: "3.11"
+      bundle_type:
+        description: "onefile or onedir"
+        required: false
+        default: "onefile"
+      windowed:
+        description: "true = hide console window (GUI apps)"
+        required: false
+        default: "false"
+      icon_file:
+        description: "Icon filename inside uploaded_project/ (empty = no icon)"
+        required: false
+        default: ""
+      asset_files:
+        description: "Comma-separated filenames in uploaded_project/_assets/ (empty = none)"
+        required: false
+        default: ""
 
 jobs:
   build:
@@ -32,11 +56,15 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ github.event.inputs.python_version }}
           cache: "pip"
 
       - name: Install PyInstaller
         run: pip install pyinstaller
+
+      - name: Install Pillow for icon conversion
+        if: ${{ github.event.inputs.icon_file != '' }}
+        run: pip install pillow
 
       - name: Install project dependencies
         shell: bash
@@ -46,10 +74,27 @@ jobs:
           fi
 
       - name: Build binary
-        run: >
-          python -m PyInstaller
-          --onefile
-          uploaded_project/${{ github.event.inputs.main_file }}
+        shell: bash
+        run: |
+          ARGS="--${{ github.event.inputs.bundle_type }}"
+          ARGS="$ARGS --name ${{ github.event.inputs.exe_name }}"
+
+          if [ "${{ github.event.inputs.windowed }}" = "true" ]; then
+            ARGS="$ARGS --windowed"
+          fi
+
+          if [ -n "${{ github.event.inputs.icon_file }}" ]; then
+            ARGS="$ARGS --icon uploaded_project/${{ github.event.inputs.icon_file }}"
+          fi
+
+          IFS=',' read -ra ASSETS <<< "${{ github.event.inputs.asset_files }}"
+          for asset in "${ASSETS[@]}"; do
+            if [ -n "$asset" ]; then
+              ARGS="$ARGS --add-data uploaded_project/_assets/${asset}:."
+            fi
+          done
+
+          python -m PyInstaller $ARGS uploaded_project/${{ github.event.inputs.main_file }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
