@@ -171,6 +171,11 @@ st.caption(
     "We'll check code quality, then build a **Linux binary** and a **Windows .exe** "
     "via GitHub Actions — both free."
 )
+st.info(
+    "**Tip:** If your project uses third-party libraries (e.g. `numpy`, `requests`), "
+    "include a `requirements.txt` in your ZIP so they are bundled into the executable.",
+    icon="ℹ️",
+)
 
 if not GITHUB_TOKEN:
     st.error(
