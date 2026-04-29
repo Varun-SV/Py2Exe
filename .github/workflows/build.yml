@@ -38,6 +38,13 @@ jobs:
       - name: Install PyInstaller
         run: pip install pyinstaller
 
+      - name: Install project dependencies
+        shell: bash
+        run: |
+          if [ -f uploaded_project/requirements.txt ]; then
+            pip install -r uploaded_project/requirements.txt
+          fi
+
       - name: Build binary
         run: >
           python -m PyInstaller
